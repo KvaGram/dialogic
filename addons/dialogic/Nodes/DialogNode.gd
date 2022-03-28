@@ -534,8 +534,6 @@ func on_timeline_start():
 		if settings.get_value('saving', 'autosave', true):
 			# save to the default slot
 			Dialogic.save('', true)
-	# TODO remove event_start in 2.0
-	emit_signal("event_start", "timeline", current_timeline)
 	emit_signal("timeline_start", current_timeline)
 
 # emits timeline_end and handles autosaving
@@ -544,8 +542,6 @@ func on_timeline_end():
 		if settings.get_value('saving', 'autosave', true):
 			# save to the default slot
 			Dialogic.save('', true)
-	# TODO remove event_end in 2.0
-	emit_signal("event_end", "timeline")
 	emit_signal("timeline_end", current_timeline)
 
 # does checks and calls the above functions
@@ -1138,7 +1134,7 @@ func get_classic_choice_button(label: String):
 	# Removing the blue selected border
 	button.set('custom_styles/focus', StyleBoxEmpty.new())
 	# Text
-	button.set('custom_fonts/font', DialogicUtil.path_fixer_load(theme.get_value('text', 'font', "res://addons/dialogic/Example Assets/Fonts/DefaultFont.tres")))
+	button.set('custom_fonts/font', load(theme.get_value('text', 'font', "res://addons/dialogic/Example Assets/Fonts/DefaultFont.tres")))
 
 
 	if theme.get_value('buttons', 'fixed', false):
@@ -1197,11 +1193,11 @@ func button_style_setter(section, data, button, theme):
 	var style_box = StyleBoxTexture.new()
 	if data[2]:
 		# I'm using a white texture to do the flat style because otherwise the padding doesn't work.
-		style_box.set('texture', DialogicUtil.path_fixer_load("res://addons/dialogic/Images/Plugin/white-texture.png"))
+		style_box.set('texture', load("res://addons/dialogic/Images/Plugin/white-texture.png"))
 		style_box.set('modulate_color', data[3])
 	else:
 		if data[4]:
-			style_box.set('texture', DialogicUtil.path_fixer_load(data[5]))
+			style_box.set('texture', load(data[5]))
 		if data[6]:
 			style_box.set('modulate_color', data[7])
 	
