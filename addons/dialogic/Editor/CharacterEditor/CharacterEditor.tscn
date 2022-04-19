@@ -270,7 +270,7 @@ margin_right = 130.0
 margin_bottom = 14.0
 rect_min_size = Vector2( 130, 0 )
 size_flags_vertical = 0
-text = "Controller"
+text = "Theme: "
 text_key = "Theme: "
 
 [node name="ControllerButton" type="MenuButton" parent="Split/EditorScroll/Editor/Controller"]

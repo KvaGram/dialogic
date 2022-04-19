@@ -126,9 +126,9 @@ func create_character():
 func generate_character_data_to_save():
 	var portraits = []
 	for p in nodes['portrait_list'].get_children():
-		var entry = {}
-		entry['name'] = p.get_node("NameEdit").text
-		entry['path'] = p.get_node("PathEdit").text
+		var entry = p.generate_data()
+		#entry['name'] = p.get_node("NameEdit").text
+		#entry['path'] = p.get_node("PathEdit").text
 		portraits.append(entry)
 	var info_to_save = {
 		'id': nodes['file'].text,
@@ -309,10 +309,12 @@ func _on_New_Portrait_Button_pressed():
 
 
 func create_portrait_entry(p_name = '', path = '', grab_focus = false):
+	#				if portaitlist equal 1, and that one entry is empty, use and select that entry.
 	if grab_focus and nodes['portrait_list'].get_child_count() == 1 and nodes['portrait_list'].get_child(0).get_node("PathEdit").text == '':
-		nodes['portrait_list'].get_child(0)._on_ButtonSelect_pressed()
+		nodes['portrait_list'].get_child(0)._on_ButtonSelect_pressed() #opens file selection (image or scene)
 		return
 	
+	#Create new portrait entry
 	var p = portrait_entry.instance()
 	p.editor_reference = editor_reference
 	p.image_node = nodes['portrait_preview_full']
@@ -326,7 +328,7 @@ func create_portrait_entry(p_name = '', path = '', grab_focus = false):
 		p.get_node("PathEdit").text = path
 	if grab_focus:
 		p.get_node("NameEdit").grab_focus()
-		p._on_ButtonSelect_pressed()
+		p._on_ButtonSelect_pressed() #opens file selection (image or scene)
 	return p
 
 

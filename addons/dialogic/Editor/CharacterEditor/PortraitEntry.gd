@@ -38,6 +38,18 @@ func _on_focus_entered():
 	else:
 		update_preview($PathEdit.text)
 
+func generate_data() -> Dictionary:
+	var data = {
+		'name' : $NameEdit.text,
+		'base_path' : $PathEdit.text #old name 'path'
+	}
+	if false: #if layered
+		var l_data = {}
+		
+		data['layers'] = l_data
+	return data
+	
+	
 
 func update_preview(path):
 	image_label.text = DTS.translate('Preview of')+' "'+$NameEdit.text+'"'
