@@ -8,6 +8,7 @@ extends Control
 var editor_reference
 onready var master_tree = get_node('../MasterTreeContainer/MasterTree')
 var portrait_entry = load("res://addons/dialogic/Editor/CharacterEditor/PortraitEntry.tscn")
+var layered_portrait_entry = load("res://addons/dialogic/Editor/CharacterEditor/LayeredPortraitEntry.tscn")
 onready var nodes = {
 	'editor': $Split/EditorScroll/Editor,
 	'name': $Split/EditorScroll/Editor/NameAndColor/NameLineEdit,
@@ -18,6 +19,7 @@ onready var nodes = {
 	'nickname': $Split/EditorScroll/Editor/DisplayNickname/LineEdit,
 	'description': $Split/EditorScroll/Editor/Description/TextEdit,
 	'theme':$Split/EditorScroll/Editor/Theme/ThemeButton,
+	'controller':$Split/EditorScroll/Editor/Controller/ControllerButton,
 	
 	'file': $Split/EditorScroll/Editor/FileName/LineEdit,
 	
@@ -39,6 +41,7 @@ onready var nodes = {
 # data
 var opened_character_data
 var selected_theme_file = ''
+var selected_controller = ''
 
 ####################################################################################################
 ##							SCRIPT
@@ -58,6 +61,7 @@ func _ready():
 	nodes['display_name_checkbox'].connect('toggled', self, '_on_display_name_toggled')
 	nodes['nickname_checkbox'].connect('toggled', self, '_on_nickname_toggled')
 	nodes['theme'].connect("about_to_show", self, "build_ThemePickerMenu")
+	nodes['controller'].connect("about_to_show", self, "build_ControllerPickerMenu")
 	
 	nodes['portrait_search'].connect('text_changed', self, '_on_PortraitSearch_text_changed')
 	nodes['portrait_search'].right_icon = get_icon("Search", "EditorIcons")
@@ -89,6 +93,7 @@ func clear_character_editor():
 	nodes['nickname'].text = ''
 	nodes['description'].text = ''
 	nodes['theme'].text = 'No custom theme'
+	nodes['controller'].text = 'Basic'
 	selected_theme_file = ''
 	
 	nodes['portrait_search'].text = ''
@@ -139,6 +144,7 @@ func generate_character_data_to_save():
 		'nickname': nodes['nickname'].text,
 		'description': nodes['description'].text,
 		'theme': selected_theme_file, 
+		'controller': selected_controller,
 		
 		'portraits': portraits,
 		'scale': nodes['scale'].value,
@@ -173,6 +179,7 @@ func load_character(filename: String):
 	nodes['nickname'].text = data.get('nickname', '')
 	nodes['description'].text = data.get('description', '')
 	refresh_themes_and_select(data.get('theme', ''))
+	nodes['controller'].text = data.get('controller', 'Basic')
 	
 	nodes['scale'].value = float(data.get('scale', 100))
 	#nodes['nickname'].visible
@@ -183,8 +190,18 @@ func load_character(filename: String):
 	nodes['portrait_preview_real'].flip_h = data.get('mirror_portraits', false)
 	nodes['portrait_preview_real'].rect_scale = Vector2(
 					float(data.get('scale', 100))/100, float(data.get('scale', 100))/100)
-	
-	# Portraits
+	#loads portraits
+	_reset_portraits()
+			
+
+####################################################################################################
+##							UI FUNCTIONS
+####################################################################################################
+func _reset_portraits():
+	# Clearing portraits
+	for p in nodes['portrait_list'].get_children():
+		p.queue_free()
+		
 	var default_portrait = create_portrait_entry()
 	default_portrait.get_node('NameEdit').text = 'Default'
 	default_portrait.get_node('NameEdit').editable = false
@@ -197,12 +214,6 @@ func load_character(filename: String):
 				current_item = default_portrait
 			else:
 				current_item = create_portrait_entry(p['name'], p['path'])
-			
-
-####################################################################################################
-##							UI FUNCTIONS
-####################################################################################################
-
 
 func _on_PortraitSearch_text_changed(text):
 	for portrait_item in nodes['portrait_list'].get_children():
@@ -220,6 +231,17 @@ func refresh_themes_and_select(file):
 	else:
 		nodes['theme'].text = DialogicUtil.get_theme_dict()[file]['name']
 		nodes['theme'].custom_icon = editor_reference.get_node("MainPanel/MasterTreeContainer/MasterTree").theme_icon
+
+func build_ControllerPickerMenu():
+	var menu:PopupMenu = nodes['controller'].get_popup()
+	menu.clear()
+	menu.add_item("Basic")
+	menu.add_item("Layered")
+	#TODO add support for custom controllers
+	
+	if not menu.is_connected("index_pressed", self, "_on_controller_selected"):
+		menu.connect("index_pressed", self, '_on_controller_selected', [menu])
+	
 
 func build_ThemePickerMenu():
 	nodes['theme'].get_popup().clear()
@@ -265,7 +287,15 @@ func build_PickerMenuFolder(menu:PopupMenu, folder_structure:Dictionary, current
 
 func _on_theme_selected(index, menu):
 	refresh_themes_and_select(menu.get_item_metadata(index).get('file', ''))
-	
+func _on_controller_selected(index, _menu):
+	if(index < 2):
+		selected_controller = "Basic" if index <= 0 else "Layered"
+	else:
+		selected_controller = "Basic" #crude fallback
+	#TODO add support for custom controllers
+	nodes['controller'].text = selected_controller
+	save_character() #remove?
+	_reset_portraits()
 
 func _on_display_name_toggled(button_pressed):
 	nodes['display_name'].visible = button_pressed
@@ -305,10 +335,10 @@ func _on_color_changed(color):
 
 # Portraits
 func _on_New_Portrait_Button_pressed():
-	create_portrait_entry('', '', true)
+	create_portrait_entry({}, true)
 
 
-func create_portrait_entry(p_name = '', path = '', grab_focus = false):
+func create_portrait_entry(data:Dictionary, grab_focus:bool = false):
 	#				if portaitlist equal 1, and that one entry is empty, use and select that entry.
 	if grab_focus and nodes['portrait_list'].get_child_count() == 1 and nodes['portrait_list'].get_child(0).get_node("PathEdit").text == '':
 		nodes['portrait_list'].get_child(0)._on_ButtonSelect_pressed() #opens file selection (image or scene)

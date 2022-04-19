@@ -48,6 +48,10 @@ func generate_data() -> Dictionary:
 		
 		data['layers'] = l_data
 	return data
+func load_data(data):
+	pass # VERY MUCH TODO!!!!
+func isEmpty() -> bool:
+	return $PathEdit.text == ""
 	
 	
 
