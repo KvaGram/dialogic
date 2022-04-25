@@ -81,7 +81,9 @@ func _ready():
 	$Split/Preview/Background/PreviewMode.select(DialogicResources.get_settings_value('editor', 'character_preview_mode', 1))
 	$Split/Preview/Background/PreviewMode.set_item_text(0, DTS.translate("Full View"))
 	$Split/Preview/Background/PreviewMode.set_item_text(1, DTS.translate("Actual Size"))
-
+	
+	_reset_portraits()
+	
 # removes all input for a new character
 func clear_character_editor():
 	nodes['file'].text = ''
@@ -201,19 +203,15 @@ func _reset_portraits():
 	# Clearing portraits
 	for p in nodes['portrait_list'].get_children():
 		p.queue_free()
-		
-	var default_portrait = create_portrait_entry()
-	default_portrait.get_node('NameEdit').text = 'Default'
-	default_portrait.get_node('NameEdit').editable = false
-	if opened_character_data.has('portraits'):
+	var current_item = null
+	if opened_character_data and opened_character_data.has('portraits'):
 		for p in opened_character_data['portraits']:
-			var current_item
-			if p['name'] == 'Default':
-				default_portrait.get_node('PathEdit').text = p['path']
-				default_portrait.update_preview(p['path'])
-				current_item = default_portrait
-			else:
-				current_item = create_portrait_entry(p['name'], p['path'])
+			current_item = create_portrait_entry({'name' : p['name'], 'base_path' : p['path']})
+	
+	if current_item == null:
+		var default_portrait = create_portrait_entry({'name' : 'Default'})
+		default_portrait.get_node('NameEdit').editable = false
+	
 
 func _on_PortraitSearch_text_changed(text):
 	for portrait_item in nodes['portrait_list'].get_children():
@@ -343,19 +341,18 @@ func create_portrait_entry(data:Dictionary, grab_focus:bool = false):
 	if grab_focus and nodes['portrait_list'].get_child_count() == 1 and nodes['portrait_list'].get_child(0).get_node("PathEdit").text == '':
 		nodes['portrait_list'].get_child(0)._on_ButtonSelect_pressed() #opens file selection (image or scene)
 		return
-	
+	#func load_data(data):
+	#	$NameEdit.text = data['name']
+	#	$PathEdit.text = data['base_path']
 	#Create new portrait entry
 	var p = portrait_entry.instance()
 	p.editor_reference = editor_reference
+	p.load_data(data)
 	p.image_node = nodes['portrait_preview_full']
 	p.image_node2 = nodes['portrait_preview_real']
 	p.image_label = nodes['image_label']
 	var p_list = nodes['portrait_list']
 	p_list.add_child(p)
-	if p_name != '':
-		p.get_node("NameEdit").text = p_name
-	if path != '':
-		p.get_node("PathEdit").text = path
 	if grab_focus:
 		p.get_node("NameEdit").grab_focus()
 		p._on_ButtonSelect_pressed() #opens file selection (image or scene)
@@ -378,7 +375,7 @@ func _on_dir_selected(path, target):
 				if '.svg' in file_lower or '.png' in file_lower:
 					if not '.import' in file_lower:
 						var final_name = path+ "/" + file_name
-						create_portrait_entry(DialogicResources.get_filename_from_path(file_name), final_name)
+						create_portrait_entry({'name' : DialogicResources.get_filename_from_path(file_name), 'base_path' : final_name})
 			file_name = dir.get_next()
 	else:
 		print("An error occurred when trying to access the path.")

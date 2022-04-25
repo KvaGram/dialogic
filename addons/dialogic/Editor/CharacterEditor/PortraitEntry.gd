@@ -49,8 +49,8 @@ func generate_data() -> Dictionary:
 		data['layers'] = l_data
 	return data
 func load_data(data):
-	$NameEdit.text = data['name']
-	$PathEdit.text = data['base_path']
+	$NameEdit.text = data.get('name','unknown')
+	$PathEdit.text = data.get('base_path','')
 func isEmpty() -> bool:
 	return $PathEdit.text == ""
 	
