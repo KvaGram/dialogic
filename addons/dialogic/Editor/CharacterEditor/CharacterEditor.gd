@@ -345,7 +345,12 @@ func create_portrait_entry(data:Dictionary, grab_focus:bool = false):
 	#	$NameEdit.text = data['name']
 	#	$PathEdit.text = data['base_path']
 	#Create new portrait entry
-	var p = portrait_entry.instance()
+	var p
+	match selected_controller:
+		"Layered":
+			p = layered_portrait_entry.instance()
+		"Basic", _: #default
+			p = portrait_entry.instance()
 	p.editor_reference = editor_reference
 	p.load_data(data)
 	p.image_node = nodes['portrait_preview_full']
