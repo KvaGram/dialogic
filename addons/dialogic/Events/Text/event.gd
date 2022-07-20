@@ -5,6 +5,7 @@ class_name DialogicTextEvent
 
 var Text:String = ""
 var Character:DialogicCharacter
+var Secundary_Characters:Array
 var Portrait = ""
 
 func _execute() -> void:
@@ -88,6 +89,7 @@ func load_from_string_to_store(string:String):
 	reg.compile("((?<name>[^:()\\n]*)?(?=(\\([^()]*\\))?:)(\\((?<portrait>[^()]*)\\))?)?:?(?<text>[^\\n]+)")
 	var result = reg.search(string)
 	if result and !result.get_string('name').empty():
+		print(result.get_string('name').strip_edges())
 		var character = DialogicUtil.guess_resource('.dch', result.get_string('name').strip_edges())
 		if character:
 			Character = load(character)
