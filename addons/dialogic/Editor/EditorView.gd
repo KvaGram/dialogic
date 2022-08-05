@@ -21,7 +21,10 @@ func _ready():
 	
 	$SaveConfirmationDialog.add_button('No Saving Please!', true, 'nosave')
 	$SaveConfirmationDialog.hide()
-
+	#load extentions
+	var extentions:Array = DialogicUtil.get_extentions()
+	
+	
 func edit_timeline(object):
 	if %Toolbar.is_current_unsaved():
 		save_current_resource()
