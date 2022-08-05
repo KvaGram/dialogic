@@ -106,7 +106,7 @@ static func get_event_scripts(include_custom_events:bool = true) -> Array:
 static func get_extention_scripts() -> Array:
 	var extention_scripts = []
 	var dir := Directory.new()
-	var file_list = listdir("res://addons/dialogic_additions/Extentions/", false, false)
+	var file_list = listdir("res://addons/dialogic_additions/Extentions/", false, true)
 	for file in file_list:
 		var path:String = "res://addons/dialogic_additions/Extentions/" + file + "/extention.gd"
 		if dir.file_exists(path):
