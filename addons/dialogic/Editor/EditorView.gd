@@ -29,9 +29,13 @@ func _ready():
 	$SaveConfirmationDialog.hide()
 	#load extentions
 	var extentions:Array = DialogicUtil.get_extentions()
-	
-	
-
+	for ext in extentions:
+		var n:Node = Node.new()
+		%Extentions.add_child(n)
+		n.set_script(ext)
+		if "editor_view" in n:
+			n.editor_view = self
+			
 
 func edit_timeline(object):
 	if %Toolbar.is_current_unsaved():
