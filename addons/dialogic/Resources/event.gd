@@ -14,6 +14,10 @@ var event_name:String = "Event"
 # To sort the buttons shown in the editor
 var event_sorting_index : int = 0
 
+# A property used for runtime, to verify if it's been loaded yet or not
+var event_node_ready : bool = false
+var deferred_processing_text : String = ""
+
 enum Category {
 	MAIN,
 	LOGIC,
@@ -210,8 +214,10 @@ func _load_from_string(string:String) -> void:
 	if '#id:' in string and can_be_translated():
 		translation_id = string.get_slice('#id:', 1).strip_edges()
 		load_from_string_to_store(string.get_slice('#id:', 0))
+		event_node_ready = true
 	else:
 		load_from_string_to_store(string)
+		event_node_ready = true
 
 
 func _test_event_string(string:String) -> bool:
@@ -258,7 +264,9 @@ func load_from_string_to_store(string:String):
 	for parameter in params.keys():
 		if not parameter in data:
 			continue
-		if typeof(data[parameter]) == TYPE_STRING and (data[parameter].ends_with(".dtl") or data[parameter].ends_with(".dch")):
+			
+		#if typeof(data[parameter]) == TYPE_STRING and (data[parameter].ends_with(".dtl") or data[parameter].ends_with(".dch")):
+		if typeof(data[parameter]) == TYPE_STRING and (data[parameter].ends_with(".dch")):
 			set(params[parameter], load(data[parameter]))
 		else:
 			var value = str2var(data[parameter].replace('\\=', '=')) if str2var(data[parameter].replace('\\=', '=')) != null else data[parameter].replace('\\=', '=')
@@ -293,7 +301,10 @@ func parse_shortcode_parameters(shortcode : String) -> Dictionary:
 ## 					BUILDING THE EDITOR LIST
 ################################################################################
 func _get_property_list() -> Array:
-	editor_list.clear()
+	if editor_list != null:
+		editor_list.clear()
+	else:
+		editor_list = []
 	build_event_editor()
 	return editor_list
 
