@@ -40,6 +40,8 @@ func _ready():
 		n.set_script(ext)
 		if "editor_view" in n:
 			n.editor_view = self
+		#if n.has_method("setup"):
+		n.setup()
 		print("extension added")
 
 func edit_timeline(object):
