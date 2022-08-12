@@ -85,15 +85,13 @@ func _load(path: String, original_path: String, use_sub_threads: bool, cache_mod
 		
 
 		
-		if Engine.is_editor_hint():
+
+			# a few types have exceptions with how they're currently written
+		if (event['event_name'] == "Label") || (event['event_name'] == "Choice"):
 			event._load_from_string(event_content)
 		else:
-			# a few types have exceptions with how they're currently written
-			if (event['event_name'] == "Label") || (event['event_name'] == "Choice"):
-				event._load_from_string(event_content)
-			else:
-				#hold it for later if we're not processing it right now
-				event['deferred_processing_text'] = event_content
+			#hold it for later if we're not processing it right now
+			event['deferred_processing_text'] = event_content
 		events.append(event)
 		prev_was_opener = event.can_contain_events
 
@@ -132,5 +130,5 @@ func _rename_dependencies(path: String, renames: Dictionary):
 					event.set(property, load(renames[event.get(property).resource_path]))
 			elif typeof(event.get(property)) == TYPE_STRING and event.get(property) in renames:
 				event.set(property, renames[event.get(property)])
-	ResourceSaver.save(path, timeline)
+	ResourceSaver.save(timeline, path)
 	return OK

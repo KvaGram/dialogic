@@ -83,7 +83,7 @@ func save_timeline() -> void:
 	
 	if current_timeline:
 		current_timeline.set_events(new_events)
-		ResourceSaver.save(current_timeline.resource_path, current_timeline)
+		ResourceSaver.save(current_timeline, current_timeline.resource_path)
 		_toolbar.set_resource_saved()
 	else:
 		if new_events.size() > 0:
@@ -676,6 +676,10 @@ func _add_event_button_pressed(event_script):
 func add_event_node(event_resource:Resource, at_index:int = -1, auto_select: bool = false, indent: bool = false):
 	if event_resource is DialogicEndBranchEvent:
 		return create_end_branch_event(at_index, %Timeline.get_child(0))
+	
+	if event_resource['event_node_ready'] == false:
+		if event_resource['deferred_processing_text'] != "":
+			event_resource._load_from_string(event_resource['deferred_processing_text'])
 	
 	var piece = load("res://addons/dialogic/Editor/Events/EventNode/EventNode.tscn").instantiate()
 	var resource = event_resource

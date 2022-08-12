@@ -62,7 +62,6 @@ func start_timeline(timeline_resource, label_or_idx = "") -> void:
 	while deferred_loader_running:		
 		continue
 		
-
 	# load the resource if only the path is given
 	if typeof(timeline_resource) == TYPE_STRING:
 		timeline_resource = load(timeline_resource)
