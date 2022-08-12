@@ -109,7 +109,7 @@ static func get_extension_scripts() -> Array:
 	for file in file_list:
 		var path:String = "res://addons/dialogic_additions/Extensions/" + file + "/extension.gd"
 		if dir.file_exists(path):
-			extension_scripts.append("path")
+			extension_scripts.append(path)
 	return extension_scripts
 
 static func pretty_name(script:String) -> String:

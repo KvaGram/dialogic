@@ -42,11 +42,11 @@ func _ready():
 	for ext in extensions:
 		var n:Node = Node.new()
 		%Extentions.add_child(n)
-		n.set_script(ext)
+		n.set_script(load(ext))
 		if "editor_view" in n:
 			n.editor_view = self
-		#if n.has_method("setup"):
-		n.setup()
+		if n.has_method("setup"):
+			n.setup()
 		print("extension added")
 
 
