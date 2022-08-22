@@ -1,0 +1,28 @@
+[gd_scene load_steps=2 format=3 uid="uid://cubwk6hmxf1bt"]
+
+[ext_resource type="Script" path="res://addons/dialogic_additions/Extensions/testextention/example_tool.gd" id="1_8486h"]
+
+[node name="example_tool" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -874.0
+offset_bottom = -450.0
+script = ExtResource("1_8486h")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Label" type="Label" parent="VBoxContainer"]
+offset_right = 150.0
+offset_bottom = 104.0
+text = "Press button below
+to add a random
+comment below
+selected event."
+
+[node name="Button" type="Button" parent="VBoxContainer"]
+offset_top = 108.0
+offset_right = 150.0
+offset_bottom = 139.0
+text = "Press me!"

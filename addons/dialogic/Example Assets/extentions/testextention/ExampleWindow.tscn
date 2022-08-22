@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://ca0xaydkhmvnp"]
+
+[ext_resource type="PackedScene" uid="uid://cubwk6hmxf1bt" path="res://addons/dialogic_additions/Extensions/testextention/example_tool.tscn" id="1_745mk"]
+
+[node name="ExampleWindow" type="Window"]
+transparent_bg = true
+title = "example"
+position = Vector2i(10, 10)
+size = Vector2i(150, 150)
+transient = true
+unresizable = true
+always_on_top = true
+transparent = true
+content_scale_size = Vector2i(1, 1)
+content_scale_mode = 2
+content_scale_aspect = 1
+
+[node name="example_tool" parent="." instance=ExtResource("1_745mk")]

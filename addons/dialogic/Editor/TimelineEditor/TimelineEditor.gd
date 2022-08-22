@@ -1,5 +1,6 @@
 @tool
 extends Container
+class_name TimelineEditor
 
 
 ################################################################################
