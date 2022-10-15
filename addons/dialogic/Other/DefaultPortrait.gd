@@ -1,28 +1,22 @@
+@tool
 extends Node
 # Default portrait scene
-# Can be extended for custom portrait scenes, this has the minimum requirements
-
-# The following minimum features should be supported by all portrait scenes:
-# @export var portrait_width: int
-# @export var portrait_height: int
-# func does_portrait_change() -> bool
-#    If the above is returning true: func change_portrait(DialogicCharacter, String) -> void:
-# func does_portrait_mirror() -> bool:
-#    If the above is returning true: func mirror_portrait(mirror:bool) -> void:
 
 class_name DialogicDefaultPortrait
 
-@export var portrait_width: int
-@export var portrait_height: int
 var character: DialogicCharacter
 var portrait: String
 
-# This function is needed on every custom portrait scene
-func does_portrait_change() -> bool:
+# Function to accept and use the extra data, if the custom portrait wants to accept it
+func _set_extra_data(data: String) -> void:
+	pass
+
+# This function can be overridden. Defaults to true, if not overridden!
+func _should_do_portrait_update(character:DialogicCharacter, portrait:String) -> bool:
 	return true
-	
+
 # If the custom portrait accepts a change, then accept it here
-func change_portrait(passed_character:DialogicCharacter, passed_portrait:String) -> void:
+func _update_portrait(passed_character:DialogicCharacter, passed_portrait:String) -> void:
 	if passed_portrait == "":
 		passed_portrait = passed_character['default_portrait']
 	portrait = passed_portrait
@@ -31,35 +25,16 @@ func change_portrait(passed_character:DialogicCharacter, passed_portrait:String)
 			character = passed_character
 		
 		
-	var path = character.portraits[portrait].path
+	var path :String = character.portraits[portrait].get('image', '')
 	$Portrait.texture = null
-	$Portrait.texture = load(path)
+	if !path.is_empty(): $Portrait.texture = load(path)
 	$Portrait.centered = false
-	$Portrait.scale = Vector2(1,1)*character.portraits[portrait].get('scale', 1)*character.scale
-	
-	# Offset is for re-orienting the picutre at 1x scale, and so position in the scene needs to include the scale in the offset
-	$Portrait.position.x = character.portraits[portrait]['offset']['x'] * character.portraits[portrait].scale *character.scale
-	$Portrait.position.y = character.portraits[portrait]['offset']['y'] * character.portraits[portrait].scale *character.scale
-	
-	if character.portraits[portrait].mirror:
-			$Portrait.flip_h = true
+	$Portrait.position = $Portrait.get_rect().size * Vector2(-0.5, -1)
 
-	# Set the portrait dimensions that are reported back to Dialogic. Scale is included in the math here
-	portrait_width = $Portrait.texture.get_width() * character.portraits[portrait].scale * character.portraits[portrait].scale *character.scale
-	portrait_height = $Portrait.texture.get_height() * character.portraits[portrait].scale * character.scale
-	
-# These are from the separate Join/Update "Mirror" toggles, to override the default mirror
-func does_portrait_mirror() -> bool:
-	return true
-	
-func mirror_portrait(mirror:bool) -> void:
-	if mirror:
-		if character.portraits[portrait].mirror:
-			$Portrait.flip_h = false
-		else:
-			$Portrait.flip_h = true
-	else:
-		if character.portraits[portrait].mirror:
-			$Portrait.flip_h = true
-		else:
-			$Portrait.flip_h = false
+# if implemented, this is called when the mirror changes
+func _set_mirror(mirror:bool) -> void:
+	$Portrait.flip_h = mirror
+
+# if implemented, this is used by the editor for the "full view" mode
+func _get_covered_rect() -> Rect2:
+	return Rect2($Portrait.position, $Portrait.get_rect().size)

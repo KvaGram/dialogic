@@ -20,55 +20,73 @@ func _recognize(resource: Resource) -> bool:
 
 # Save the resource
 func _save(resource: Resource, path: String = '', flags: int = 0) -> int:
-	var err:int
-	var file:File = File.new()
-	err = file.open(path, File.WRITE)
-	
-	if err != OK:
-		printerr('Can\'t write file: "%s"! code: %d.' % [path, err])
-		return err
-	
-	var result = ""
-	var indent = 0
-	var trans_updates = {}
-	var translate = DialogicUtil.get_project_setting('dialogic/translation_enabled', false)
-	
-	for idx in range(0, len(resource._events)):
-		var event = resource._events[idx]
-		
-		#it shouldn't be trying to save if the node's not been prepared, but if it does then it will just save default values instead so prepare it from what was there before
-		if event['event_node_ready'] == false:
-			event._load_from_string(event['deferred_processing_text'])
-		
-		
-		if event is DialogicEndBranchEvent:
-			indent -= 1
-			continue
-		if event != null:
-			result += "\t".repeat(indent)+event._store_as_string().replace('\n', "\n"+"\t".repeat(indent)) + "\n"
-			if translate and event.can_be_translated():
-				if event.translation_id:
-					trans_updates[event.translation_id] = event.get_original_translation_text()
-				else:
-					trans_updates[event.add_translation_id()] = event.get_original_translation_text()
-		if event.can_contain_events:
-			indent += 1
-		if indent < 0: indent = 0
-		result += "\t".repeat(indent)+"\n"
-	
-	file.store_string(result)
-	file.close()
-	print('[Dialogic] Saved timeline "' , path, '"')
-	if translate:
-		update_translations(path, trans_updates)
-	return OK
+	if resource.get_meta("timeline_not_saved", false):
+		if len(resource.events) == 0:
+			printerr("Timeline is empty! Aborting save to prevent accidental data loss, please delete the file if it is supposed to be empty")
+			return ERR_INVALID_DATA
+		# Do not do this if the timeline's not in a ready state, so it doesn't accidentally save it blank
+		elif !resource.events_processed:
+			print('[Dialogic] Saving timeline...')
+			var err:int
+			var file:File = File.new()
+			err = file.open(path, File.WRITE)
+			
+			if err != OK:
+				printerr('Can\'t write file: "%s"! code: %d.' % [path, err])
+				return err
+			
+			#var result = events_to_text(resource.events)
+			var result := ""
+			var indent := 0
 
-func update_translations(path, translation_updates):
-	if not translation_updates:
+			for idx in range(0, len(resource.events)):
+				var event = resource.events[idx]
+				
+
+				if event['event_name'] == 'End Branch':
+					indent -=1
+					continue
+				
+				if event != null:
+					result += "\t".repeat(indent)+ event['event_node_as_text'] + "\n"
+				if event.can_contain_events:
+					indent += 1
+				if indent < 0: 
+					indent = 0
+				result += "\t".repeat(indent)+"\n"
+				
+			file.store_string(result)
+			file.close()
+			print('[Dialogic] Saved timeline "' , path, '"')
+			
+			# Checking for translation updates 
+			var trans_updates := {}
+			var translate :bool= DialogicUtil.get_project_setting('dialogic/translation_enabled', false)
+			for idx in range(0, len(resource.events)):
+				var event = resource.events[idx]
+
+				if event != null:
+					if translate and event.can_be_translated():
+						if event.translation_id:
+							trans_updates[event.translation_id] = event.get_original_translation_text()
+						else:
+							trans_updates[event.add_translation_id()] = event.get_original_translation_text()
+
+	#		if translate:
+	#			update_translations(path, trans_updates)
+			return OK
+		else: 
+			printerr(path + ": Timeline was not in ready state for saving! Timeline was not saved!")
+			return ERR_INVALID_DATA
+	else:
+		return OK
+
+func update_translations(path:String, translation_updates:Dictionary):
+	if translation_updates.is_empty():
 		return
 	var err:int
-	var trans_file = File.new()
-	var file_path = ""
+	var trans_file := File.new()
+	var file_path :String = ""
 	if DialogicUtil.get_project_setting('dialogic/translation_path', '').ends_with('.csv'):
 		file_path = ProjectSettings.get_setting('dialogic/translation_path')
 	else:
@@ -79,7 +97,7 @@ func update_translations(path, translation_updates):
 		printerr('[Dialogic] Can\'t read translation file: "%s"! code: %d.' % [file_path, err])
 		return
 	
-	var csv_lines = []
+	var csv_lines := []
 	while !trans_file.eof_reached():
 		csv_lines.append(trans_file.get_csv_line())
 		if csv_lines[-1][0] in translation_updates.keys():

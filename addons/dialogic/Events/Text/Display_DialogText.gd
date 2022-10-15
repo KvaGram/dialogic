@@ -1,11 +1,12 @@
 extends RichTextLabel
 
-class_name DialogicDisplay_DialogText, "icon.png"
+class_name DialogicNode_DialogText
+
 
 enum ALIGNMENT {LEFT, CENTER, RIGHT}
 
 @export var Align : ALIGNMENT = ALIGNMENT.LEFT
-@onready var timer = null
+@onready var timer :Timer = null
 
 var effect_regex = RegEx.new()
 var modifier_words_select_regex = RegEx.new()
@@ -24,6 +25,7 @@ func _ready() -> void:
 	add_to_group('dialogic_dialog_text')
 	
 	bbcode_enabled = true
+	text = ""
 	
 	# setup my timer
 	timer = Timer.new()
@@ -67,8 +69,8 @@ func continue_reveal() -> void:
 
 # shows all the text imidiatly
 # called by this thing itself or the DialogicGameHandler
-func finish_text():
-	percent_visible = 1
+func finish_text() -> void:
+	visible_ratio = 1
 	execute_effects(true)
 	timer.stop()
 	Dialogic.current_state = Dialogic.states.IDLE
@@ -133,3 +135,9 @@ func parse_modifiers(_text:String) -> String:
 	# [br] effect
 	_text = _text.replace('[br]', '\n')
 	return _text
+
+func pause() -> void: 
+	timer.stop()
+
+func resume() -> void:
+	continue_reveal()

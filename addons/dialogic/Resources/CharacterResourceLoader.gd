@@ -36,7 +36,7 @@ func _load(path: String, original_path: String, use_sub_threads: bool, cache_mod
 		push_error("For some reason, loading custom resource failed with error code: %s"%err)
 		return err
 	
-	var res = dict2inst(str2var(file.get_as_text()))
+	var res = dict_to_inst(str_to_var(file.get_as_text()))
 	
 	# Everything went well, and you parsed your file data into your resource. Life is good, return it
 	return res
@@ -45,14 +45,14 @@ func _get_dependencies(path:String, add_type:bool):
 	var depends_on : PackedStringArray
 	var character:DialogicCharacter = load(path)
 	for p in character.portraits.values():
-		if p.path:
+		if 'path' in p and p.path:
 			depends_on.append(p.path)
 	return depends_on
 
 func _rename_dependencies(path: String, renames: Dictionary):
 	var character:DialogicCharacter = load(path)
 	for p in character.portraits:
-		if character.portraits[p].path in renames:
+		if 'path' in character.portraits[p] and character.portraits[p].path in renames:
 			character.portraits[p].path = renames[character.portraits[p].path]
 	ResourceSaver.save(character, path)
 	return OK

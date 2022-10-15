@@ -10,6 +10,7 @@ func _ready():
 
 func set_project_setting(value, setting):
 	ProjectSettings.set_setting(setting, value)
+	ProjectSettings.save()
 	
 	refresh()
 
@@ -46,6 +47,7 @@ func open_file_folder_dialog():
 func file_folder_selected(path):
 	%TransFileFolder.text = path
 	ProjectSettings.set_setting('dialogic/translation_path', path)
+	ProjectSettings.save()
 	refresh()
 
 
@@ -62,6 +64,7 @@ func _on_TransInitialize_pressed():
 		file.store_csv_line(['keys', orig_locale])
 	else:
 		ProjectSettings.set_setting('dialogic/translation_path', '')
+	ProjectSettings.save()
 		
 	
 	for timeline_path in DialogicUtil.list_resources_of_type('.dtl'):
@@ -85,6 +88,7 @@ func _on_TransInitialize_pressed():
 	
 	
 	ProjectSettings.set_setting('dialogic/translation_enabled', true)
+	ProjectSettings.save()
 	refresh()
 
 func _on_TransRemove_pressed():
@@ -99,8 +103,8 @@ func erase_translations():
 	if trans_path.ends_with('.csv'):
 		for x_file in DialogicUtil.listdir(trans_path.get_base_dir()):
 			if x_file.ends_with('.translation'):
-				trans_files.erase(trans_path.get_base_dir().plus_file(x_file))
-				dir.remove(trans_path.get_base_dir().plus_file(x_file))
+				trans_files.erase(trans_path.get_base_dir().path_join(x_file))
+				dir.remove(trans_path.get_base_dir().path_join(x_file))
 		dir.remove(DialogicUtil.get_project_setting('dialogic/translation_path', ''))
 	
 	ProjectSettings.set_setting('dialogic/translation_path', null)
@@ -110,8 +114,8 @@ func erase_translations():
 			dir.remove(timeline_path.trim_suffix('.dtl')+'_translation.csv')
 			for x_file in DialogicUtil.listdir(timeline_path.get_base_dir()):
 				if x_file.ends_with('.translation'):
-					trans_files.erase(timeline_path.get_base_dir().plus_file(x_file))
-					dir.remove(timeline_path.get_base_dir().plus_file(x_file))
+					trans_files.erase(timeline_path.get_base_dir().path_join(x_file))
+					dir.remove(timeline_path.get_base_dir().path_join(x_file))
 		
 		var tml:DialogicTimeline = load(timeline_path)
 		for event in tml.get_events():
@@ -123,7 +127,7 @@ func erase_translations():
 
 	
 	ProjectSettings.set_setting('locale/translations', PackedStringArray(trans_files))
-	
+	ProjectSettings.save()
 	refresh()
 
 
@@ -141,7 +145,7 @@ func _on_TransUpdate_pressed():
 		
 		if !mode:
 			for file in DialogicUtil.listdir(timeline_path.get_base_dir()):
-				file = timeline_path.get_base_dir().plus_file(file)
+				file = timeline_path.get_base_dir().path_join(file)
 				if file.ends_with('.translation'):
 					if not file in trans_files:
 						trans_files.append(file)
@@ -150,9 +154,10 @@ func _on_TransUpdate_pressed():
 	if mode:
 		var trans_folder = DialogicUtil.get_project_setting('dialogic/translation_path', '').get_base_dir()
 		for file in DialogicUtil.listdir(trans_folder):
-			file = trans_folder.plus_file(file)
+			file = trans_folder.path_join(file)
 			if file.ends_with('.translation'):
 				if not file in trans_files:
 					trans_files.append(file)
 	
 	ProjectSettings.set_setting('locale/translations', PackedStringArray(trans_files))
+	ProjectSettings.save()

@@ -6,6 +6,7 @@ static func get_editor_scale() -> float:
 
 
 static func listdir(path: String, files_only: bool = true, throw_error:bool = true, full_file_path:bool = false) -> Array:
+
 	# https://docs.godotengine.org/en/stable/classes/class_directory.html#description
 	var files: Array = []
 	var dir := Directory.new()
@@ -18,12 +19,12 @@ static func listdir(path: String, files_only: bool = true, throw_error:bool = tr
 				if files_only:
 					if not dir.current_is_dir() and not file_name.ends_with('.import'):
 						if full_file_path:
-							files.append(path.plus_file(file_name))
+							files.append(path.path_join(file_name))
 						else:
 							files.append(file_name)
 				else:
 					if full_file_path:
-						files.append(path.plus_file(file_name))
+						files.append(path.path_join(file_name))
 					else:
 						files.append(file_name)
 			file_name = dir.get_next()
@@ -43,12 +44,13 @@ static func list_resources_of_type(extension):
 	return all_resources
 
 
-static func scan_folder(folder_path:String, extension:String):
-	var dir = Directory.new()
-	var list = []
+static func scan_folder(folder_path:String, extension:String) -> Array:
+	#print(str(Time.get_ticks_msec()) + ": DialogicUtil.scan_folder")
+	var dir:Directory = Directory.new()
+	var list: Array = []
 	if dir.open(folder_path) == OK:
 		dir.list_dir_begin()
-		var file_name = dir.get_next()
+		var file_name := dir.get_next()
 		while file_name != "":
 			if dir.current_is_dir() and not file_name.begins_with("."):
 				list += scan_folder(folder_path+"/"+file_name, extension)
@@ -88,18 +90,20 @@ static func get_project_setting(setting:String, default = null):
 
 static func get_event_scripts(include_custom_events:bool = true) -> Array:
 	var event_scripts = []
+	var directory:Directory = Directory.new()
 	
 	var file_list = listdir("res://addons/dialogic/Events/", false)
 	for file in file_list:
-		event_scripts.append("res://addons/dialogic/Events/" + file + "/event.gd")
+		var possible_script:String = "res://addons/dialogic/Events/" + file + "/event.gd"
+		if directory.file_exists(possible_script):
+			event_scripts.append(possible_script)
 	
 	if include_custom_events:
-		var dir := Directory.new()
 		file_list = listdir("res://addons/dialogic_additions/Events/", false, false)
 		for file in file_list:
-			var path:String = "res://addons/dialogic_additions/Events/" + file + "/event.gd"
-			if dir.file_exists(path):
-				event_scripts.append("path")
+			var possible_script: String = "res://addons/dialogic_additions/Events/" + file + "/event.gd"
+			if directory.file_exists(possible_script):
+				event_scripts.append(possible_script)
 		
 	return event_scripts
 static func get_extension_scripts() -> Array:

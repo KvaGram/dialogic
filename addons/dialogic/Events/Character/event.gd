@@ -14,57 +14,79 @@ var AnimationName:String = ""
 var AnimationLength: float = 0.5
 var AnimationRepeats: int = 1
 var AnimationWait: bool = false
+var PositionMoveTime: float = 0.0
 var Z_Index: int = 0
 var Mirrored: bool = false
 var _leave_all:bool = false
+var _update_zindex: bool = false
+var ExtraData: String = ""
+
+var _character_from_directory: String: 
+	get:
+		for item in _character_directory.keys():
+			if _character_directory[item]['resource'] == Character:
+				return item
+				break
+		return ""
+	set(value): 
+		_character_from_directory = value
+		if value in _character_directory.keys():
+			Character = _character_directory[value]['resource']
+
+var _character_directory: Dictionary = {}
 
 func _execute() -> void:
 	match ActionType:
 		ActionTypes.Join:
 			
 			if Character:
-				var n = dialogic.Portraits.add_portrait(Character, Portrait, Position, Mirrored)
-				
-				if AnimationName.is_empty():
-					AnimationName = DialogicUtil.get_project_setting('dialogic/animations/join_default', 
-	get_script().resource_path.get_base_dir().plus_file('DefaultAnimations/fade_in_up.gd'))
-					AnimationLength = DialogicUtil.get_project_setting('dialogic/animations/join_default_length', 0.5)
-					AnimationWait = DialogicUtil.get_project_setting('dialogic/animations/join_default_wait', true)
-				if AnimationName:
-					var anim:DialogicAnimation = dialogic.Portraits.animate_portrait(Character, AnimationName, AnimationLength, AnimationRepeats)
-					
-					if AnimationWait:
-						dialogic.current_state = Dialogic.states.ANIMATING
-						await anim.finished
-						dialogic.current_state = Dialogic.states.IDLE
-				
-		ActionTypes.Leave:
-			if _leave_all:
-				if AnimationName.is_empty():
-					AnimationName = DialogicUtil.get_project_setting('dialogic/animations/leave_default', 
-get_script().resource_path.get_base_dir().plus_file('DefaultAnimations/fade_out_down.gd'))
-					AnimationLength = DialogicUtil.get_project_setting('dialogic/animations/leave_default_length', 0.5) 
-					AnimationWait = DialogicUtil.get_project_setting('dialogic/animations/leave_default_wait', true)
-				
-					if AnimationName:
-						for chara in dialogic.Portraits.get_joined_characters():
-							var anim = dialogic.Portraits.animate_portrait(chara, AnimationName, AnimationLength, AnimationRepeats)
-							
-							anim.finished.connect(dialogic.Portraits.remove_portrait.bind(Character))
+				if !dialogic.Portraits.is_character_joined(Character):
+					var n = dialogic.Portraits.add_portrait(Character, Portrait, Position, Mirrored, Z_Index, ExtraData)
+					if n:
+						if AnimationName.is_empty():
+							AnimationName = DialogicUtil.get_project_setting('dialogic/animations/join_default', 
+			get_script().resource_path.get_base_dir().path_join('DefaultAnimations/fade_in_up.gd'))
+							AnimationLength = DialogicUtil.get_project_setting('dialogic/animations/join_default_length', 0.5)
+							AnimationWait = DialogicUtil.get_project_setting('dialogic/animations/join_default_wait', true)
+						if AnimationName:
+							var anim:DialogicAnimation = dialogic.Portraits.animate_portrait(Character, AnimationName, AnimationLength, AnimationRepeats)
 							
 							if AnimationWait:
 								dialogic.current_state = Dialogic.states.ANIMATING
 								await anim.finished
 								dialogic.current_state = Dialogic.states.IDLE
-					
-					else:
-						for chara in dialogic.Portraits.get_joined_characters():
-							dialogic.Portraits.remove_portrait(chara)
+				else:
+					dialogic.Portraits.change_portrait(Character, Portrait)
+					if AnimationName.is_empty():
+						AnimationLength = DialogicUtil.get_project_setting('dialogic/animations/join_default_length', 0.5)
+					dialogic.Portraits.move_portrait(Character, Position, Z_Index, false, AnimationLength)
+		ActionTypes.Leave:
+			if _leave_all:
+				if AnimationName.is_empty():
+					AnimationName = DialogicUtil.get_project_setting('dialogic/animations/leave_default', 
+get_script().resource_path.get_base_dir().path_join('DefaultAnimations/fade_out_down.gd'))
+					AnimationLength = DialogicUtil.get_project_setting('dialogic/animations/leave_default_length', 0.5) 
+					AnimationWait = DialogicUtil.get_project_setting('dialogic/animations/leave_default_wait', true)
+				
+				if AnimationName:
+					for chara in dialogic.Portraits.get_joined_characters():
+						var anim = dialogic.Portraits.animate_portrait(chara, AnimationName, AnimationLength, AnimationRepeats)
+						
+						anim.finished.connect(dialogic.Portraits.remove_portrait.bind(chara))
+						
+						if AnimationWait:
+							dialogic.current_state = Dialogic.states.ANIMATING
+							await anim.finished
+							dialogic.current_state = Dialogic.states.IDLE
+				
+				else:
+					for chara in dialogic.Portraits.get_joined_characters():
+						dialogic.Portraits.remove_portrait(chara)
 			elif Character:
 				if dialogic.Portraits.is_character_joined(Character):
 					if AnimationName.is_empty():
 						AnimationName = DialogicUtil.get_project_setting('dialogic/animations/leave_default', 
-	get_script().resource_path.get_base_dir().plus_file('DefaultAnimations/fade_out_down.gd'))
+	get_script().resource_path.get_base_dir().path_join('DefaultAnimations/fade_out_down.gd'))
 						AnimationLength = DialogicUtil.get_project_setting('dialogic/animations/leave_default_length', 0.5) 
 						AnimationWait = DialogicUtil.get_project_setting('dialogic/animations/leave_default_wait', true)
 					
@@ -84,9 +106,9 @@ get_script().resource_path.get_base_dir().plus_file('DefaultAnimations/fade_out_
 		ActionTypes.Update:
 			if Character:
 				if dialogic.Portraits.is_character_joined(Character):
-					dialogic.Portraits.change_portrait(Character, Portrait, Mirrored)
+					dialogic.Portraits.change_portrait(Character, Portrait, Mirrored, Z_Index, _update_zindex, ExtraData)
 					if Position != 0:
-						dialogic.Portraits.move_portrait(Character, Position)
+						dialogic.Portraits.move_portrait(Character, Position, Z_Index, _update_zindex, PositionMoveTime)
 					
 					if AnimationName:
 						var anim = dialogic.Portraits.animate_portrait(Character, AnimationName, AnimationLength, AnimationRepeats)
@@ -102,8 +124,8 @@ get_script().resource_path.get_base_dir().plus_file('DefaultAnimations/fade_out_
 func get_required_subsystems() -> Array:
 	return [
 				{'name':'Portraits',
-				'subsystem': get_script().resource_path.get_base_dir().plus_file('Subsystem_Portraits.gd'),
-				'settings': get_script().resource_path.get_base_dir().plus_file('PortraitSettings.tscn'),
+				'subsystem': get_script().resource_path.get_base_dir().path_join('Subsystem_Portraits.gd'),
+				'settings': get_script().resource_path.get_base_dir().path_join('PortraitSettings.tscn'),
 				},
 			]
 
@@ -126,7 +148,7 @@ func _init() -> void:
 ################################################################################
 
 ## THIS RETURNS A READABLE REPRESENTATION, BUT HAS TO CONTAIN ALL DATA (This is how it's stored)
-func get_as_string_to_store() -> String:
+func to_text() -> String:
 	var result_string = ""
 	
 	match ActionType:
@@ -138,13 +160,20 @@ func get_as_string_to_store() -> String:
 		if ActionType == ActionTypes.Leave and _leave_all:
 			result_string += "--All--"
 		else: 
-			result_string += Character.name
+			var name = ""
+			for path in _character_directory.keys():
+				if _character_directory[path]['resource'] == Character:
+					name = path
+					break
+			if name.count(" ") > 0:
+				name = '"' + name + '"'
+			result_string += name
 			if Portrait and ActionType != ActionTypes.Leave:
 				result_string+= " ("+Portrait+")"
 	
 	if Position and ActionType != ActionTypes.Leave:
 		result_string += " "+str(Position)
-	if AnimationName != "" || Z_Index != 0 || Mirrored != false:
+	if AnimationName != "" || Z_Index != 0 || Mirrored != false || PositionMoveTime != 0.0 || ExtraData != "":
 		result_string += " ["
 		if AnimationName:
 			result_string += 'animation="'+DialogicUtil.pretty_name(AnimationName)+'"'
@@ -162,15 +191,28 @@ func get_as_string_to_store() -> String:
 			
 		if Mirrored:
 			result_string += ' mirrored="' + str(Mirrored) + '"'
+		
+		if PositionMoveTime != 0:
+			result_string += ' move_time="' + str(PositionMoveTime) + '"'
+		
+		if ExtraData != "":
+			result_string += ' extra_data="' + ExtraData + '"'
 			
 		result_string += "]"
 	return result_string
 
 
 ## THIS HAS TO READ ALL THE DATA FROM THE SAVED STRING (see above) 
-func load_from_string_to_store(string:String):
+func from_text(string:String) -> void:
+	if Engine.is_editor_hint() == false:
+		_character_directory = Dialogic.character_directory
+	else:
+		_character_directory = self.get_meta("editor_character_directory")
+		
 	var regex = RegEx.new()
-	regex.compile("(?<type>Join|Update|Leave) (?<character>[^()\\d\\n\\[]*)( *\\((?<portrait>\\S*)\\))? ?((?<position>\\d*))?\\s*(\\[(?<shortcode>.*)\\])?")
+	
+	# Reference regex without Godot escapes: (?<type>Join|Update|Leave)\s*(")?(?<name>(?(2)[^"\n]*|[^(: \n]*))(?(2)"|)(\W*\((?<portrait>.*)\))?(\s*(?<position>\d))?(\s*\[(?<shortcode>.*)\])?
+	regex.compile("(?<type>Join|Update|Leave)\\s*(\")?(?<name>(?(2)[^\"\\n]*|[^(: \\n]*))(?(2)\"|)(\\W*\\((?<portrait>.*)\\))?(\\s*(?<position>\\d))?(\\s*\\[(?<shortcode>.*)\\])?")
 	
 	var result = regex.search(string)
 	
@@ -182,19 +224,45 @@ func load_from_string_to_store(string:String):
 		"Update":
 			ActionType = ActionTypes.Update
 	
-	if result.get_string('character').strip_edges():
-		if ActionType == ActionTypes.Leave and result.get_string('character').strip_edges() == "--All--":
+	if result.get_string('name').strip_edges():
+		if ActionType == ActionTypes.Leave and result.get_string('name').strip_edges() == "--All--":
 			_leave_all = true
 		else: 
-			var char_guess = DialogicUtil.guess_resource('.dch', result.get_string('character').strip_edges())
-			if char_guess:
-				Character = load(char_guess)
+			var name = result.get_string('name').strip_edges()
+			
+
+			if _character_directory != null:
+				if _character_directory.size() > 0:
+					Character = null
+					if _character_directory.has(name):
+						Character = _character_directory[name]['resource']
+					else:
+						name = name.replace('"', "")
+						# First do a full search to see if more of the path is there then necessary:
+						for character in _character_directory:
+							if name in _character_directory[character]['full_path']:
+								Character = _character_directory[character]['resource']
+								break								
+						
+						# If it doesn't exist, we'll consider it a guest and create a temporary character
+						if Character == null:
+							if Engine.is_editor_hint() == false:
+								Character = DialogicCharacter.new()
+								Character.display_name = name
+								var entry:Dictionary = {}
+								entry['resource'] = Character
+								entry['full_path'] = "runtime://" + name
+								Dialogic.character_directory[name] = entry
+
 	
 	if result.get_string('portrait').strip_edges():
 		Portrait = result.get_string('portrait').strip_edges()
 
 	if result.get_string('position'):
 		Position = result.get_string('position').to_int()
+	elif ActionType == ActionTypes.Update:
+		# Override the normal default if it's an Update
+		Position = 0 
 	
 	if result.get_string('shortcode'):
 		var shortcode_params = parse_shortcode_parameters(result.get_string('shortcode'))
@@ -206,7 +274,7 @@ func load_from_string_to_store(string:String):
 				printerr("[Dialogic] Couldn't identify animation '"+AnimationName+"'.")
 				AnimationName = ""
 			
-			var animLength = shortcode_params.get('length', 0.5).to_float()
+			var animLength = shortcode_params.get('length', '0.5').to_float()
 			if typeof(animLength) == TYPE_FLOAT:
 				AnimationLength = animLength
 			else:
@@ -216,15 +284,23 @@ func load_from_string_to_store(string:String):
 		#	AnimationLength = AnimationLength.to_float()
 			AnimationWait = DialogicUtil.str_to_bool(shortcode_params.get('wait', 'false'))
 		
-		#repeat is only supported on Update, the other two should not be checking this
+		#repeat is supported on Update, the other two should not be checking this
 			if ActionType == ActionTypes.Update:
 				AnimationRepeats = shortcode_params.get('repeat', 1).to_int()
-				
-		Z_Index = 	shortcode_params.get('z-index', 1)
+				PositionMoveTime = shortcode_params.get('move_time', 0.0)
+		#move time is only supported on Update, but it isnt part of the animations so its separate
+		if ActionType == ActionTypes.Update:
+			if typeof(shortcode_params.get('move_time', 0)) == TYPE_STRING:	
+				PositionMoveTime = shortcode_params.get('move_time', 0.0).to_float()
+		
+		if typeof(shortcode_params.get('z-index', 0)) == TYPE_STRING:	
+			Z_Index = 	shortcode_params.get('z-index', 0).to_int()
+			_update_zindex = true 
 		Mirrored = DialogicUtil.str_to_bool(shortcode_params.get('mirrored', 'false'))
+		ExtraData = shortcode_params.get('extra_data', "")
+		
 # RETURN TRUE IF THE GIVEN LINE SHOULD BE LOADED AS THIS EVENT
-func is_valid_event_string(string:String):
-	
+func is_valid_event(string:String) -> bool:
 	if string.begins_with("Join ") or string.begins_with("Leave ") or string.begins_with("Update "):
 		return true
 	return false
@@ -235,9 +311,26 @@ func is_valid_event_string(string:String):
 ################################################################################
 
 func build_event_editor():
-	add_header_edit('ActionType', ValueType.FixedOptionSelector, '', '',
-		{'selector_options':{"Join":ActionTypes.Join, "Leave":ActionTypes.Leave, "Update":ActionTypes.Update}})
-	add_header_edit('Character', ValueType.ComplexPicker, '', '', {'suggestions_func':[self, 'get_character_suggestions'],'file_extension':'.dch', 'icon':load("res://addons/dialogic/Editor/Images/Resources/character.svg")})
+	add_header_edit('ActionType', ValueType.FixedOptionSelector, '', '', {
+		'selector_options': [
+			{
+				'label': 'Join',
+				'value': ActionTypes.Join,
+				'icon': load("res://addons/dialogic/Editor/Images/Dropdown/join.svg")
+			},
+			{
+				'label': 'Leave',
+				'value': ActionTypes.Leave,
+				'icon': load("res://addons/dialogic/Editor/Images/Dropdown/leave.svg")
+			},
+			{
+				'label': 'Update',
+				'value': ActionTypes.Update,
+				'icon': load("res://addons/dialogic/Editor/Images/Dropdown/update.svg")
+			}
+		]
+	})
+	add_header_edit('_character_from_directory', ValueType.ComplexPicker, '', '', {'file_extension':'.dch', 'suggestions_func':[self, 'get_character_suggestions'], 'icon':load("res://addons/dialogic/Editor/Images/Resources/character.svg")})
 	
 	add_header_edit('Portrait', ValueType.ComplexPicker, 'Portrait:', '', {'empty_text':'Default', 'suggestions_func':[self, 'get_portrait_suggestions'], 'icon':load("res://addons/dialogic/Editor/Images/Resources/Portrait.svg")}, 'Character != null and !has_no_portraits() and ActionType != %s' %ActionTypes.Leave)
 	add_header_label('Character has no portraits!', 'has_no_portraits()')
@@ -249,6 +342,7 @@ func build_event_editor():
 	add_body_edit('AnimationRepeats', ValueType.Integer, 'Repeat:', '', {},'Character and !AnimationName.is_empty() and ActionType == %s)' %ActionTypes.Update)
 	add_body_edit('Z_Index', ValueType.Integer, 'Portrait z-index:', "",{},'ActionType != %s' %ActionTypes.Leave)
 	add_body_edit('Mirrored', ValueType.Bool, 'Mirrored:', "",{},'ActionType != %s' %ActionTypes.Leave)
+	add_body_edit('PositionMoveTime', ValueType.Float, 'Transiton time to change position:', '', {}, 'ActionType == %s' %ActionTypes.Update)
 	add_body_edit('_leave_all', ValueType.Bool, 'Leave All:', "",{},'ActionType == %s' %ActionTypes.Leave)
 
 func has_no_portraits() -> bool:
@@ -256,15 +350,23 @@ func has_no_portraits() -> bool:
 
 func get_character_suggestions(search_text:String):
 	var suggestions = {}
-	var resources = DialogicUtil.list_resources_of_type('.dch')
 	
-	for resource in resources:
-		if search_text.is_empty() or search_text.to_lower() in DialogicUtil.pretty_name(resource).to_lower():
-			suggestions[DialogicUtil.pretty_name(resource)] = {'value':resource, 'tooltip':resource, 'icon':load("res://addons/dialogic/Editor/Images/Resources/character.svg")}
+	#override the previous _character_directory with the meta, specifically for searching otherwise new nodes wont work
+	_character_directory = Engine.get_meta('dialogic_character_directory')
+
+	var icon = load("res://addons/dialogic/Editor/Images/Resources/character.svg")
+
+	suggestions['(No one)'] = {'value':'', 'editor_icon':["GuiRadioUnchecked", "EditorIcons"]}
+	
+	for resource in _character_directory.keys():
+		if search_text == "" || resource.to_lower().contains(search_text.to_lower()):
+			suggestions[resource] = {'value': resource, 'tooltip': _character_directory[resource]['full_path'], 'icon': icon.duplicate()}
 	return suggestions
+	
 
 func get_portrait_suggestions(search_text):
 	var suggestions = {}
+	var icon = load("res://addons/dialogic/Editor/Images/Resources/Portrait.svg")
 	if ActionType == ActionTypes.Update:
 		suggestions["Don't Change"] = {'value':'', 'editor_icon':["GuiRadioUnchecked", "EditorIcons"]}
 	if ActionType == ActionTypes.Join:
@@ -272,7 +374,7 @@ func get_portrait_suggestions(search_text):
 	if Character != null:
 		for portrait in Character.portraits:
 			if search_text.is_empty() or search_text.to_lower() in portrait.to_lower():
-				suggestions[portrait] = {'value':portrait, 'icon':load("res://addons/dialogic/Editor/Images/Resources/Portrait.svg")}
+				suggestions[portrait] = {'value':portrait, 'icon':icon.duplicate()}
 	return suggestions
 
 func get_animation_suggestions(search_text):
@@ -301,7 +403,7 @@ func get_animation_suggestions(search_text):
 
 
 func list_animations() -> Array:
-	var list = DialogicUtil.listdir(get_script().resource_path.get_base_dir().plus_file('DefaultAnimations'), true, false, true)
+	var list = DialogicUtil.listdir(get_script().resource_path.get_base_dir().path_join('DefaultAnimations'), true, false, true)
 	list.append_array(DialogicUtil.listdir(DialogicUtil.get_project_setting('dialogic/animations/custom_folder', 'res://addons/dialogic_additions/Animations'), true, false, true))
 	return list
 

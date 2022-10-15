@@ -20,7 +20,7 @@ func _enter_tree():
 	_editor_view.plugin_reference = self
 	_editor_view.hide()
 	editor_interface = get_editor_interface()
-	get_editor_interface().get_editor_main_control().add_child(_editor_view)
+	get_editor_interface().get_editor_main_screen().add_child(_editor_view)
 	_make_visible(false)
 
 
@@ -50,11 +50,7 @@ func _make_visible(visible:bool):
 
 
 func _get_plugin_icon():
-	var _scale : String = str(get_editor_interface().get_editor_scale())
-	var  _theme : String = 'light'
-	if get_editor_interface().get_base_control().get_theme_constant("dark_theme", "Editor"):
-		_theme = 'dark'
-	return load("res://addons/dialogic/Editor/Images/Plugin/plugin-editor-icon-" + _theme + "-theme-" + _scale + ".svg")
+	return load("res://addons/dialogic/Editor/Images/plugin-icon.svg")
 
 
 func _remove_custom_editor_view():

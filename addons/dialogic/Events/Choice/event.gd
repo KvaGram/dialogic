@@ -16,8 +16,8 @@ func _execute() -> void:
 func get_required_subsystems() -> Array:
 	return [
 				{'name':'Choices',
-				'subsystem': get_script().resource_path.get_base_dir().plus_file('Subsystem_Choices.gd'),
-				'settings':get_script().resource_path.get_base_dir().plus_file('ChoicesSettings.tscn'),
+				'subsystem': get_script().resource_path.get_base_dir().path_join('Subsystem_Choices.gd'),
+				'settings':get_script().resource_path.get_base_dir().path_join('ChoicesSettings.tscn'),
 				},
 			]
 
@@ -42,14 +42,14 @@ func is_expected_parent_event(event:DialogicEvent):
 
 # return a control node that should show on the END BRANCH node
 func get_end_branch_control() -> Control:
-	return load(get_script().resource_path.get_base_dir().plus_file('Choice_End.tscn')).instantiate()
+	return load(get_script().resource_path.get_base_dir().path_join('Choice_End.tscn')).instantiate()
 
 ################################################################################
 ## 						SAVING/LOADING
 ################################################################################
 
 ## THIS RETURNS A READABLE REPRESENTATION, BUT HAS TO CONTAIN ALL DATA (This is how it's stored)
-func get_as_string_to_store() -> String:
+func to_text() -> String:
 	var result_string = ""
 
 	result_string = "- "+Text
@@ -65,7 +65,7 @@ func get_as_string_to_store() -> String:
 
 
 ## THIS HAS TO READ ALL THE DATA FROM THE SAVED STRING (see above) 
-func load_from_string_to_store(string:String):
+func from_text(string:String) -> void:
 	var regex = RegEx.new()
 	regex.compile('- (?<text>[^\\[]*)(\\[if (?<condition>[^\\]]+)])?\\s?(\\[else (?<else_option>[^\\]\\n]*)\\])?')
 	var result = regex.search(string.strip_edges())
@@ -80,11 +80,9 @@ func load_from_string_to_store(string:String):
 			'disable':IfFalseActions.DISABLE}.get(result.get_string('else_option'), IfFalseActions.DEFAULT)
 
 # RETURN TRUE IF THE GIVEN LINE SHOULD BE LOADED AS THIS EVENT
-func is_valid_event_string(string:String) -> bool:
-	
+func is_valid_event(string:String) -> bool:
 	if string.strip_edges().begins_with("-"):
 		return true
-	
 	return false
 
 func can_be_translated():
@@ -101,4 +99,18 @@ func get_original_translation_text():
 func build_event_editor():
 	add_header_edit("Text", ValueType.SinglelineText)
 	add_body_edit("Condition", ValueType.Condition, 'if ')
-	add_body_edit("IfFalseAction", ValueType.FixedOptionSelector, 'else ', '', {'selector_options':{"Default":IfFalseActions.DEFAULT, "Hide":IfFalseActions.HIDE, "Disable":IfFalseActions.DISABLE}}, '!Condition.is_empty()')
+	add_body_edit("IfFalseAction", ValueType.FixedOptionSelector, 'else ', '', {
+		'selector_options': [
+			{
+				'label': 'Default',
+				'value': IfFalseActions.DEFAULT,
+			},
+			{
+				'label': 'Hide',
+				'value': IfFalseActions.HIDE,
+			},
+			{
+				'label': 'Disable',
+				'value': IfFalseActions.DISABLE,
+			}
+		]}, '!Condition.is_empty()')

@@ -40,8 +40,8 @@ func _execute() -> void:
 func get_required_subsystems() -> Array:
 	return [
 				{'name':'VAR',
-				'subsystem': get_script().resource_path.get_base_dir().plus_file('Subsystem_Variables.gd'),
-				'settings': get_script().resource_path.get_base_dir().plus_file('SettingsEditor/Editor.tscn'),
+				'subsystem': get_script().resource_path.get_base_dir().path_join('Subsystem_Variables.gd'),
+				'settings': get_script().resource_path.get_base_dir().path_join('SettingsEditor/Editor.tscn'),
 				},
 			]
 
@@ -63,7 +63,7 @@ func _init() -> void:
 ## 						SAVING/LOADING
 ################################################################################
 ## THIS RETURNS A READABLE REPRESENTATION, BUT HAS TO CONTAIN ALL DATA (This is how it's stored)
-func get_as_string_to_store() -> String:
+func to_text() -> String:
 	var string = "VAR "
 	if Name:
 		string += "{" + Name + "}"
@@ -89,7 +89,7 @@ func get_as_string_to_store() -> String:
 	return string
 
 ## THIS HAS TO READ ALL THE DATA FROM THE SAVED STRING (see above) 
-func load_from_string_to_store(string:String):
+func from_text(string:String) -> void:
 	var reg = RegEx.new()
 	reg.compile("VAR (?<name>[^=+\\-*\\/]*)(?<operation>=|\\+=|-=|\\*=|\\/=)(?<value>[^\\[\\n]*)(?<shortcode>\\[.*)?")
 	var result = reg.search(string)
@@ -113,7 +113,7 @@ func load_from_string_to_store(string:String):
 		RandomMin = DialogicUtil.logical_convert(shortcodeparams.get('min', 0))
 		RandomMax = DialogicUtil.logical_convert(shortcodeparams.get('max', 100))
 
-func is_valid_event_string(string:String) -> bool:
+func is_valid_event(string:String) -> bool:
 	return string.begins_with('VAR ')
 
 ################################################################################
@@ -122,9 +122,35 @@ func is_valid_event_string(string:String) -> bool:
 
 func build_event_editor():
 	add_header_edit('Name', ValueType.ComplexPicker, '', '', {'suggestions_func':[self, 'get_var_suggestions'], 'editor_icon':["ClassList", "EditorIcons"], 'disable_pretty_name':true})
-	add_header_edit('Operation', ValueType.FixedOptionSelector, '', '', {'selector_options':
-		{'to be':OPERATIONS.SET, 'to itself plus':OPERATIONS.ADD, 'to itself minus':OPERATIONS.SUBSTRACT, 'to itself multiplied by':OPERATIONS.MULTIPLY, 'to itself divided by':OPERATIONS.DIVIDE}
-		}, '!Name.is_empty()')
+	add_header_edit('Operation', ValueType.FixedOptionSelector, '', '', {
+		'selector_options': [
+			{
+				'label': 'to be',
+				'icon': load("res://addons/dialogic/Editor/Images/Dropdown/set.svg"),
+				'value': OPERATIONS.SET
+			},
+			{
+				'label': 'to itself plus',
+				'icon': load("res://addons/dialogic/Editor/Images/Dropdown/plus.svg"),
+				'value': OPERATIONS.ADD
+			},
+			{
+				'label': 'to itself minus',
+				'icon': load("res://addons/dialogic/Editor/Images/Dropdown/minus.svg"),
+				'value': OPERATIONS.SUBSTRACT
+			},
+			{
+				'label': 'to itself multiplied by',
+				'icon': load("res://addons/dialogic/Editor/Images/Dropdown/multiply.svg"),
+				'value': OPERATIONS.MULTIPLY
+			},
+			{
+				'label': 'to itself divided by',
+				'icon': load("res://addons/dialogic/Editor/Images/Dropdown/divide.svg"),
+				'value': OPERATIONS.DIVIDE
+			}
+		]
+	}, '!Name.is_empty()')
 	add_header_edit('Value', ValueType.ComplexPicker, '', '', {'suggestions_func':[self, 'get_value_suggestions'], 'editor_icon':["Variant", "EditorIcons"], 'disable_pretty_name':true}, '!Name.is_empty() and not RandomEnabled')
 	add_header_label('a random integer', 'RandomEnabled')
 	add_body_edit('RandomEnabled', ValueType.Bool, 'Use Random Integer:', '', {}, '!Name.is_empty()')
