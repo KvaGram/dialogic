@@ -1,6 +1,5 @@
 @tool
 extends Container
-class_name TimelineEditor
 
 var editor_reference = null
 

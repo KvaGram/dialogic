@@ -99,12 +99,11 @@ static func get_event_scripts(include_custom_events:bool = true) -> Array:
 	return event_scripts
 static func get_extension_scripts() -> Array:
 	var extension_scripts = []
-	var dir := Directory.new()
 	var file_list = listdir("res://addons/dialogic_additions/Extensions/", false, true)
 	for file in file_list:
-		var path:String = "res://addons/dialogic_additions/Extensions/" + file + "/extension.gd"
-		if dir.file_exists(path):
-			extension_scripts.append(path)
+		var possible_script:String = "res://addons/dialogic_additions/Extensions/" + file + "/extension.gd"
+		if FileAccess.file_exists(possible_script):
+			extension_scripts.append(possible_script)
 	return extension_scripts
 
 static func pretty_name(script:String) -> String:
