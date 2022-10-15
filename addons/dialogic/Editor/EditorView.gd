@@ -54,9 +54,8 @@ func _exit_tree():
 
 func open_last_resource():
 	if ProjectSettings.has_setting('dialogic/editor/last_resources'):
-		var directory := Directory.new();
 		var path :String= ProjectSettings.get_setting('dialogic/editor/last_resources')[0]
-		if directory.file_exists(path):
+		if FileAccess.file_exists(path):
 			DialogicUtil.get_dialogic_plugin().editor_interface.inspect_object(load(path))
 	
 
@@ -249,7 +248,7 @@ func _on_play_timeline():
 		ProjectSettings.set_setting('dialogic/editor/current_timeline_path', _get_timeline_editor().current_timeline.resource_path)
 		ProjectSettings.save()
 
-		DialogicUtil.get_dialogic_plugin().editor_interface.play_custom_scene("res://addons/dialogic/Other/TestTimelineScene.tscn")
+		DialogicUtil.get_dialogic_plugin().editor_interface.play_custom_scene("res://addons/dialogic/Editor/Common/TestTimelineScene.tscn")
 
 
 #########################################################
