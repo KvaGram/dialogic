@@ -136,6 +136,7 @@ func _on_Indent_visibility_changed():
 
 
 func _request_selection():
+	# TODO doesn't work. I'm sure - JS
 	var timeline_editor = editor_reference.get_node_or_null('MainPanel/TimelineEditor')
 	if (timeline_editor != null):
 		# @todo select item and clear selection is marked as "private" in TimelineEditor.gd
@@ -146,15 +147,12 @@ func _request_selection():
 # called to inform event parts, that a focus is wanted
 func focus():
 	pass
-	#if resource.header_scene:
-	#	resource.header_scene.focus()
-	#if resource.body_scene:
-	#	resource.body_scene.focus()
+
 
 func toggle_collapse(toggled):
 	collapsed = toggled
 	$PanelContainer/MarginContainer/VBoxContainer/CollapsedBody.visible = toggled
-	var timeline_editor = find_parent('TimelineEditor')
+	var timeline_editor = find_parent('TimelineVisualEditor')
 	if (timeline_editor != null):
 		# @todo select item and clear selection is marked as "private" in TimelineEditor.gd
 		# consider to make it "public" or add a public helper function
@@ -175,13 +173,14 @@ func build_editor():
 		if p.name == "linebreak":
 			current_body_container = HFlowContainer.new()
 			%BodyContent.add_child(current_body_container)
+			continue
 		
 		### STRINGS
 		elif p.dialogic_type == resource.ValueType.MultilineText:
 			editor_node = load("res://addons/dialogic/Editor/Events/Fields/MultilineText.tscn").instantiate()
 		elif p.dialogic_type == resource.ValueType.SinglelineText:
 			editor_node = load("res://addons/dialogic/Editor/Events/Fields/SinglelineText.tscn").instantiate()
-		
+			editor_node.placeholder = p.display_info.get('placeholder', '')
 		elif p.dialogic_type == resource.ValueType.Bool:
 			editor_node = load("res://addons/dialogic/Editor/Events/Fields/Bool.tscn").instantiate()
 		
@@ -205,7 +204,7 @@ func build_editor():
 			editor_node.empty_text = p.display_info.get('empty_text', '')
 			editor_node.placeholder_text = p.display_info.get('placeholder', 'Select Resource')
 			editor_node.resource_icon = p.display_info.get('icon', null)
-			editor_node.disable_pretty_name = p.display_info.get('disable_pretty_name', false)
+			editor_node.enable_pretty_name = p.display_info.get('enable_pretty_name', false)
 			if editor_node.resource_icon == null and p.display_info.has('editor_icon'):
 				editor_node.resource_icon = callv('get_theme_icon', p.display_info.editor_icon)
 			
@@ -213,9 +212,13 @@ func build_editor():
 		elif p.dialogic_type == resource.ValueType.Integer:
 			editor_node = load("res://addons/dialogic/Editor/Events/Fields/Number.tscn").instantiate()
 			editor_node.use_int_mode()
+			editor_node.max = p.display_info.get('max', 9999)
+			editor_node.min = p.display_info.get('min', -9999)
 		elif p.dialogic_type == resource.ValueType.Float:
 			editor_node = load("res://addons/dialogic/Editor/Events/Fields/Number.tscn").instantiate()
 			editor_node.use_float_mode()
+			editor_node.max = p.display_info.get('max', 9999)
+			editor_node.min = p.display_info.get('min', 0)
 		elif p.dialogic_type == resource.ValueType.Decibel:
 			editor_node = load("res://addons/dialogic/Editor/Events/Fields/Number.tscn").instantiate()
 			editor_node.use_decibel_mode()
@@ -236,7 +239,17 @@ func build_editor():
 			editor_node = Label.new()
 			editor_node.text = p.display_info.text
 			editor_node.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		
+		elif p.dialogic_type == resource.ValueType.Button:
+			editor_node = Button.new()
+			editor_node.text = p.display_info.text
+			if typeof(p.display_info.icon) == TYPE_ARRAY:
+				editor_node.icon = callv('get_theme_icon', p.display_info.icon)
+			else:
+				editor_node.icon = p.display_info.icon
+			editor_node.flat = true
+			editor_node.custom_minimum_size.x = 30*DialogicUtil.get_editor_scale()
+			editor_node.tooltip_text = p.display_info.tooltip
+			editor_node.pressed.connect(p.display_info.callable)
 		## CUSTOM
 		elif p.dialogic_type == resource.ValueType.Custom:
 			if p.display_info.has('path'):
@@ -261,7 +274,8 @@ func build_editor():
 		if 'property_name' in editor_node:
 			editor_node.property_name = p.name
 		if editor_node.has_method('set_value'):
-			editor_node.set_value(resource.get(p.name))
+			if resource.get(p.name) != null: # Got an error here saying that "Cannot convert argument 1 from Nil to bool." so I'm adding this check
+				editor_node.set_value(resource.get(p.name))
 		if editor_node.has_signal('value_changed'):
 			editor_node.value_changed.connect(set_property)
 		if editor_node.has_method('set_left_text'):
@@ -277,7 +291,7 @@ func build_editor():
 		has_body_content = false
 		expanded = false
 		body_container.visible = false
-		
+	
 	content_changed.connect(recalculate_edit_visibility.bind(edit_conditions_list))
 	recalculate_edit_visibility(edit_conditions_list)
 
@@ -297,11 +311,12 @@ func recalculate_edit_visibility(list):
 				printerr("(recalculate_edit_visibility)  condition expression failed with error: " + expr.get_error_text())
 	
 	%ExpandButton.visible = false
-	for node in body_content_container.get_children():
-		for sub_node in node.get_children():
-			if sub_node.visible:
-				%ExpandButton.visible = true
-				break
+	if body_content_container != null:
+		for node in body_content_container.get_children():
+			for sub_node in node.get_children():
+				if sub_node.visible:
+					%ExpandButton.visible = true
+					break
 
 func set_property(property_name, value):
 	resource.set(property_name, value)
@@ -337,8 +352,8 @@ func _ready():
 		if resource.event_name:
 			#title_label.text = DTS.translate(resource.event_name)
 			title_label.text = resource.event_name
-		if resource.get_icon() != null:
-			_set_event_icon(resource.get_icon())
+		if resource._get_icon() != null:
+			_set_event_icon(resource._get_icon())
 
 		%IconPanel.self_modulate = resource.event_color
 		
