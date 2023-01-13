@@ -57,7 +57,7 @@ func add_portrait(character:DialogicCharacter, portrait:String,  position_idx:in
 		print_debug('[DialogicError] Cannot call add_portrait() with null character.')
 		return null
 	if not portrait in character.portraits:
-		print_debug("[DialogicError] Tried joining ",character.display_name, " wit not-existing portrait '", portrait, "'. Will use default portrait instead.")
+		print_debug("[DialogicError] Tried joining ",character.display_name, " with not-existing portrait '", portrait, "'. Will use default portrait instead.")
 		portrait = character.default_portrait
 		if portrait.is_empty():
 			print_debug("[DialogicError] Character ",character.display_name, " has no default portrait to use.")
@@ -83,7 +83,7 @@ func add_portrait(character:DialogicCharacter, portrait:String,  position_idx:in
 func change_portrait(character:DialogicCharacter, portrait:String, mirrored:bool = false, z_index: int = 0, update_zindex:bool = false, extra_data:String = "") -> void:
 	if not character or not is_character_joined(character):
 		print_debug('[DialogicError] Cannot change portrait of null/not joined character.')
-		return null
+		return
 	
 	if portrait.is_empty():
 		portrait = character.default_portrait
@@ -176,7 +176,7 @@ func animate_portrait(character:DialogicCharacter, animation_path:String, length
 func move_portrait(character:DialogicCharacter, position_idx:int, z_index:int = 0, update_zindex:bool = false,  time:float = 0.0):
 	if not character or not is_character_joined(character):
 		print_debug('[DialogicError] Cannot move portrait of null/not joined character.')
-		return null
+		return
 	
 	var char_node = dialogic.current_state_info.portraits[character.resource_path].node
 	
@@ -230,7 +230,7 @@ func move_portrait_position(position_number: int, vector:Vector2, relative:bool 
 			add_portrait_position(position_number, vector)
 		else: 
 			print_debug('[DialogicError] Cannot move non-existent position. (Use SetAbsolute to create a new position)')
-			return null
+			return
 	
 	if !relative:
 		current_positions[position_number] = vector
