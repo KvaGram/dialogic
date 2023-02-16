@@ -319,11 +319,9 @@ func parse_shortcode_parameters(shortcode : String) -> Dictionary:
 ################################################################################
 
 func _get_icon() -> Resource:
-	var ext : String = '.png'
-	var icon := load(self.get_script().get_path().get_base_dir() + "/icon" + ext)
-	if icon:
-		return icon
-	return load("res://addons/dialogic/Editor/Images/Pieces/warning.svg")
+	if FileAccess.file_exists(self.get_script().get_path().get_base_dir() + "/icon.png"):
+		return load(self.get_script().get_path().get_base_dir() + "/icon.png")
+	return load("res://addons/dialogic/Editor/Images/Pieces/closed-icon.svg")
 
 
 func set_default_color(value) -> void:
@@ -331,7 +329,7 @@ func set_default_color(value) -> void:
 	event_color = DialogicUtil.get_color(value)
 
 
-func _get_property_list() -> Array:
+func get_event_editor_info() -> Array:
 	if Engine.is_editor_hint():
 		if editor_list != null:
 			editor_list.clear()

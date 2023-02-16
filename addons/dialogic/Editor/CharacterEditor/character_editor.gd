@@ -123,8 +123,8 @@ func _ready() -> void:
 	
 	## General Styling
 	var panel_style = DCSS.inline({
-		'border-radius': 5,
-		'border': 1,
+		'border-radius': 3,
+		'border': 0,
 		'border_color':get_theme_color("dark_color_3", "Editor"),
 		'background': get_theme_color("base_color", "Editor"),
 		'padding': [10, 10],
@@ -354,20 +354,21 @@ func _on_portrait_tree_button_clicked(item:TreeItem, column:int, id:int, mouse_b
 # this removes/and adds the DEFAULT star on the portrait list
 func update_default_portrait_star(default_portrait_name:String) -> void:
 	var item_list : Array = %PortraitTree.get_root().get_children()
-	while true:
-		var item = item_list.pop_back()
-		if item.get_button_by_id(0, 2) != -1:
-			item.erase_button(0, item.get_button_by_id(0, 2))
-		if %PortraitTree.get_full_item_name(item) == default_portrait_name:
-			item.erase_button(0, item.get_button_by_id(0, 1))
-			item.erase_button(0, item.get_button_by_id(0, 3))
-			item.add_button(0, get_theme_icon('Favorites', 'EditorIcons'), 2, true, 'Default')
-			item.add_button(0, get_theme_icon('Duplicate', 'EditorIcons'), 3, false, 'Duplicate')
-			item.add_button(0, get_theme_icon('Remove', 'EditorIcons'), 1, false, 'Remove')
-		item_list.append_array(item.get_children())
-		
-		if item_list.is_empty():
-			break
+	if item_list.is_empty() == false:
+		while true:
+			var item = item_list.pop_back()
+			if item.get_button_by_id(0, 2) != -1:
+				item.erase_button(0, item.get_button_by_id(0, 2))
+			if %PortraitTree.get_full_item_name(item) == default_portrait_name:
+				item.erase_button(0, item.get_button_by_id(0, 1))
+				item.erase_button(0, item.get_button_by_id(0, 3))
+				item.add_button(0, get_theme_icon('Favorites', 'EditorIcons'), 2, true, 'Default')
+				item.add_button(0, get_theme_icon('Duplicate', 'EditorIcons'), 3, false, 'Duplicate')
+				item.add_button(0, get_theme_icon('Remove', 'EditorIcons'), 1, false, 'Remove')
+			item_list.append_array(item.get_children())
+			
+			if item_list.is_empty():
+				break
 
 
 func _on_item_edited():
@@ -394,7 +395,6 @@ func setup_portrait_settings_tab() -> void:
 	# Setting up Default Portrait Picker
 	%DefaultPortraitPicker.resource_icon = load("res://addons/dialogic/Editor/Images/Resources/portrait.svg")
 	%DefaultPortraitPicker.get_suggestions_func = suggest_portraits
-	%DefaultPortraitPicker.set_left_text("")
 
 
 # Make sure preview get's updated when portrait settings change
