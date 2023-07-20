@@ -94,9 +94,9 @@ static func get_indexers(include_custom := true, force_reload := false) -> Array
 		var possible_script:String = DialogicUtil.get_module_path(file).path_join("index.gd")
 		if FileAccess.file_exists(possible_script):
 			indexers.append(load(possible_script).new())
-	
+
 	if include_custom:
-		var extensions_folder :String= ProjectSettings.get_setting('dialogic/extension_folder/', "res://addons/dialogic_additions/")
+		var extensions_folder: String = ProjectSettings.get_setting('dialogic/extensions_folder', "res://addons/dialogic_additions/")
 		for file in listdir(extensions_folder, false, false):
 			var possible_script: String = extensions_folder.path_join(file + "/index.gd")
 			if FileAccess.file_exists(possible_script):
@@ -117,7 +117,7 @@ static func str_to_bool(boolstring:String) -> bool:
 	return true if boolstring == "true" else false
 
 
-static func logical_convert(value:String) -> Variant:
+static func logical_convert(value:Variant) -> Variant:
 	if typeof(value) == TYPE_STRING:
 		if value.is_valid_int():
 			return value.to_int()
